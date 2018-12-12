@@ -33,11 +33,9 @@ for line in df_content[0]:
 word_to_ix = {word: i for i, word in enumerate(tokens)}
 ix_to_word = {i: word for i, word in enumerate(tokens)}
 
-# Print Some info about the text
-print("Tokens")
-print(word_to_ix)
-print(ix_to_word)
-print(len(tokens))
+"""
+Model
+"""
 
 
 class TextLearner(nn.Module):
@@ -66,14 +64,29 @@ class TextLearner(nn.Module):
         return out
 
 
-HIDDEN_DIM = 1000
+# Create tensor from text
+def tensor_from_text(text):
+    ix = [word_to_ix[word] for word in text]
+    return torch.tensor(ix, dtype=torch.long)
 
+
+# Print predictions
+def print_texts(pred):
+    words = []
+    for index in pred:
+        words.append(ix_to_word[index])
+    print(' '.join(words))
+
+
+# DIMS
+HIDDEN_DIM = 1000
 in_dim = len(tokens)
 out_dim = len(tokens)
 
+# Init the model
 model = TextLearner(in_dim, HIDDEN_DIM, out_dim)
 
-# Cross entropy loss
+# NLL loss
 criterion = nn.NLLLoss()
 
 # Fixed leaning rate
@@ -82,29 +95,19 @@ learning_rate = 0.1
 # Stochastic gradient descent for optimisation
 optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
 
-
-def tensor_from_text(text):
-    ix = [word_to_ix[word] for word in text]
-    return torch.tensor(ix, dtype=torch.long)
-
-
-def print_texts(pred):
-    words = []
-    for index in pred:
-        words.append(ix_to_word[index])
-    print(' '.join(words))
-
-
+# Create inputs and target tensor
 input_tensor = tensor_from_text(tokens)
 labels = tensor_from_text(tokens)
 
+print("Traning the model")
+
 iter = 0
-pred = []
+for epoch in range(100):  # Fix number of epoch
 
-for epoch in range(100):
-
+    # Zero out gradient
     model.zero_grad()
 
+    # Init the hidden state
     hidden = model.init_hidden()
 
     # Clear gradients w.r.t. parameters
@@ -113,11 +116,10 @@ for epoch in range(100):
     # Forward pass to get logits
     outputs = model(input_tensor)
 
-    # Calculate Loss: softmax --> cross entropy loss
+    # Calculate Loss: softmax --> NLL Loss
     loss = criterion(outputs, labels)
 
     # Get predictions from the maximum value
-
     _, predicted = torch.max(outputs.data, 1)
 
     # Getting gradients w.r.t. parameters
@@ -126,10 +128,9 @@ for epoch in range(100):
     # Updating parameters
     optimizer.step()
 
+    # Print values for each iteration
     correct = (predicted.numpy() == labels.numpy()).sum()
-
     accuracy = 100 * correct / len(tokens)
-
     print("Accuracy: " + str(int(accuracy)) + "%")
     print("Loss: " + str(loss.item()))
     print("Iterations: " + str(iter))
