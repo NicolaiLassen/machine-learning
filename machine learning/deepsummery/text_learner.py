@@ -41,16 +41,21 @@ Model
 class TextLearner(nn.Module):
     def __init__(self, in_dim, hidden_dim, out_dim):
         super(TextLearner, self).__init__()
+
+        # Set hidden dim
         self.hidden_dim = hidden_dim
 
+        # Embedding words
         self.embed = nn.Embedding(in_dim, hidden_dim)
 
-        self.lstm = nn.GRU(hidden_dim, hidden_dim)
+        # GRU unit
+        self.gru = nn.GRU(hidden_dim, hidden_dim)
 
+        # Out
         self.lin_out = nn.Linear(hidden_dim, out_dim)
-
         self.soft = nn.LogSoftmax(dim=1)
 
+        # Init hidden
         self.hidden = self.init_hidden()
 
     def init_hidden(self):
@@ -58,7 +63,7 @@ class TextLearner(nn.Module):
 
     def forward(self, x):
         out = self.embed(x).view(len(x), 1, -1)
-        out, hidden = self.lstm(out, self.hidden)
+        out, hidden = self.gru(out, self.hidden)
         out = self.lin_out(out.view(len(x), -1))
         out = self.soft(out)
         return out
@@ -100,8 +105,7 @@ input_tensor = tensor_from_text(tokens)
 labels = tensor_from_text(tokens)
 
 print("Traning the model")
-
-iter = 0
+itr = 0
 for epoch in range(100):  # Fix number of epoch
 
     # Zero out gradient
@@ -133,14 +137,14 @@ for epoch in range(100):  # Fix number of epoch
     accuracy = 100 * correct / len(tokens)
     print("Accuracy: " + str(int(accuracy)) + "%")
     print("Loss: " + str(loss.item()))
-    print("Iterations: " + str(iter))
+    print("Iterations: " + str(itr))
 
     if accuracy == 100:
         print("Done with 100% accuracy")
         print_texts(predicted.numpy())
         break
 
-    if iter % 5 == 0:
+    if itr % 5 == 0:
         print_texts(predicted.numpy())
 
-    iter += 1
+    itr += 1
