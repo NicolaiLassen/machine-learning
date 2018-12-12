@@ -2,13 +2,8 @@ from __future__ import print_function
 
 import torch
 import torch.nn as nn
-from nltk.tokenize import word_tokenize
 import pandas as pd
-import time as t
-from torch.autograd import Variable
-import matplotlib.pyplot as plt
-import numpy as np
-import torch.nn.functional as F
+from nltk.tokenize import word_tokenize
 
 # Run as GPU or CPU
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -48,7 +43,7 @@ class TextLearner(nn.Module):
         # Embedding words
         self.embed = nn.Embedding(in_dim, hidden_dim)
 
-        # GRU unit
+        # Gated recurrent unit (GRU) - https://en.wikipedia.org/wiki/Gated_recurrent_unit
         self.gru = nn.GRU(hidden_dim, hidden_dim)
 
         # Out
@@ -59,7 +54,7 @@ class TextLearner(nn.Module):
         self.hidden = self.init_hidden()
 
     def init_hidden(self):
-        return torch.zeros(1, 1, self.hidden_dim)
+        return torch.zeros(1, 1, self.hidden_dim, device=device)
 
     def forward(self, x):
         out = self.embed(x).view(len(x), 1, -1)
@@ -72,7 +67,7 @@ class TextLearner(nn.Module):
 # Create tensor from text
 def tensor_from_text(text):
     ix = [word_to_ix[word] for word in text]
-    return torch.tensor(ix, dtype=torch.long)
+    return torch.tensor(ix, dtype=torch.long, device=device)
 
 
 # Print predictions
@@ -84,7 +79,7 @@ def print_texts(pred):
 
 
 # DIMS
-HIDDEN_DIM = 1000
+HIDDEN_DIM = 500
 in_dim = len(tokens)
 out_dim = len(tokens)
 
@@ -103,6 +98,10 @@ optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
 # Create inputs and target tensor
 input_tensor = tensor_from_text(tokens)
 labels = tensor_from_text(tokens)
+
+"""
+Training loop
+"""
 
 print("Traning the model")
 itr = 0
@@ -140,7 +139,7 @@ for epoch in range(100):  # Fix number of epoch
     print("Iterations: " + str(itr))
 
     if accuracy == 100:
-        print("Done with 100% accuracy")
+        print("Done learning")
         print_texts(predicted.numpy())
         break
 
