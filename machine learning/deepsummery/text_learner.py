@@ -24,7 +24,7 @@ for line in df_content[0]:
     for word in word_tokenize(line):
         if word not in tokens:
             tokens.append(word)
-        text.append(word)
+    text.append(word_tokenize(line))
 
 print(text)
 
@@ -86,7 +86,7 @@ def print_texts(pred):
 # DIMS
 HIDDEN_DIM = 100
 in_dim = len(tokens)
-out_dim = len(tokens)
+out_dim = len(tokens)   # Use labels when you have different text
 embed_dim = len(tokens)
 
 # Init the model
@@ -101,59 +101,57 @@ learning_rate = 0.2
 # Stochastic gradient descent for optimisation
 optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
 
-# Create inputs and target tensor
-input_tensor = tensor_from_text(text)
-labels = tensor_from_text(text)
-
 """
 Training loop
 """
 
 print("Traning the model")
 itr = 0
-for epoch in range(1000):  # Fix number of epoch
+results = [0 for i in range(len(text))]
+for epoch in range(200):  # Fix number of epoch
+    for line in text:
 
-    # Zero out gradient
-    model.zero_grad()
+        input_tensor = tensor_from_text(line)
+        labels = tensor_from_text(line)
 
-    # Init the hidden state
-    hidden = model.init_hidden()
+        # Zero out gradient
+        model.zero_grad()
 
-    # Clear gradients w.r.t. parameters
-    optimizer.zero_grad()
+        # Init the hidden state
+        hidden = model.init_hidden()
 
-    # Forward pass to get logits
-    outputs = model(input_tensor)
+        # Clear gradients w.r.t. parameters
+        optimizer.zero_grad()
 
-    # Calculate Loss: softmax --> NLL Loss
-    loss = criterion(outputs, labels)
+        # Forward pass to get logits
+        outputs = model(input_tensor)
 
-    # Get predictions from the maximum value
-    _, predicted = torch.max(outputs.data, 1)
+        # Calculate Loss: softmax --> NLL Loss
+        loss = criterion(outputs, labels)
 
-    # Getting gradients w.r.t. parameters
-    loss.backward()
+        # Get predictions from the maximum value
+        _, predicted = torch.max(outputs.data, 1)
 
-    # Updating parameters
-    optimizer.step()
+        # Getting gradients w.r.t. parameters
+        loss.backward()
 
-    # Print values for each iteration
-    correct = (predicted.numpy() == labels.numpy()).sum()
-    accuracy = 100 * correct / len(text)
-    print("Accuracy: " + str(int(accuracy)) + "%")
-    print("Loss: " + str(loss.item()))
-    print("Iterations: " + str(itr))
+        # Updating parameters
+        optimizer.step()
 
-    if accuracy == 100:
-        print("")
-        print("Done")
-        print("Actual")
-        print_texts(labels.numpy())
-        print("Learned")
-        print_texts(predicted.numpy())
-        break
+        # Print values for each iteration
+        correct = (predicted.numpy() == labels.numpy()).sum()
+        accuracy = 100 * correct / len(line)
+        print("Accuracy: " + str(int(accuracy)) + "%")
+        print("Loss: " + str(loss.item()))
+        print("Iterations: " + str(itr))
+        results[itr % len(text)] = predicted.numpy()
 
-    if itr % 5 == 0:
-        print_texts(predicted.numpy())
+        if itr % 10 == 0:
+            print_texts(predicted.numpy())
 
-    itr += 1
+        itr += 1
+
+print("\nDone")
+for pred in results:
+    print("Predicted")
+    print_texts(pred)
