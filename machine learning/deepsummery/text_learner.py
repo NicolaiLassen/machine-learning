@@ -19,14 +19,19 @@ df_content = pd.read_csv("./data/data.txt", header=None, delimiter="\t")
 # Tokenize
 print("Tokenizing text corpus")
 tokens = []
+text = []
 for line in df_content[0]:
     for word in word_tokenize(line):
         if word not in tokens:
             tokens.append(word)
+        text.append(word)
+
+print(text)
 
 # Dictionary of ix
 word_to_ix = {word: i for i, word in enumerate(tokens)}
 ix_to_word = {i: word for i, word in enumerate(tokens)}
+
 
 """
 Model
@@ -34,17 +39,17 @@ Model
 
 
 class TextLearner(nn.Module):
-    def __init__(self, in_dim, hidden_dim, out_dim):
+    def __init__(self, in_dim, hidden_dim, embed_dim, out_dim):
         super(TextLearner, self).__init__()
 
         # Set hidden dim
         self.hidden_dim = hidden_dim
 
         # Embedding words
-        self.embed = nn.Embedding(in_dim, hidden_dim)
+        self.embed = nn.Embedding(in_dim, embed_dim)
 
         # Gated recurrent unit (GRU) - https://en.wikipedia.org/wiki/Gated_recurrent_unit
-        self.gru = nn.GRU(hidden_dim, hidden_dim)
+        self.gru = nn.GRU(embed_dim, hidden_dim)
 
         # Out
         self.lin_out = nn.Linear(hidden_dim, out_dim)
@@ -79,25 +84,26 @@ def print_texts(pred):
 
 
 # DIMS
-HIDDEN_DIM = 500
+HIDDEN_DIM = 100
 in_dim = len(tokens)
 out_dim = len(tokens)
+embed_dim = len(tokens)
 
 # Init the model
-model = TextLearner(in_dim, HIDDEN_DIM, out_dim)
+model = TextLearner(in_dim, HIDDEN_DIM, embed_dim, out_dim)
 
 # NLL loss
 criterion = nn.NLLLoss()
 
 # Fixed leaning rate
-learning_rate = 0.1
+learning_rate = 0.2
 
 # Stochastic gradient descent for optimisation
 optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
 
 # Create inputs and target tensor
-input_tensor = tensor_from_text(tokens)
-labels = tensor_from_text(tokens)
+input_tensor = tensor_from_text(text)
+labels = tensor_from_text(text)
 
 """
 Training loop
@@ -105,7 +111,7 @@ Training loop
 
 print("Traning the model")
 itr = 0
-for epoch in range(100):  # Fix number of epoch
+for epoch in range(1000):  # Fix number of epoch
 
     # Zero out gradient
     model.zero_grad()
@@ -133,13 +139,17 @@ for epoch in range(100):  # Fix number of epoch
 
     # Print values for each iteration
     correct = (predicted.numpy() == labels.numpy()).sum()
-    accuracy = 100 * correct / len(tokens)
+    accuracy = 100 * correct / len(text)
     print("Accuracy: " + str(int(accuracy)) + "%")
     print("Loss: " + str(loss.item()))
     print("Iterations: " + str(itr))
 
     if accuracy == 100:
-        print("Done learning")
+        print("")
+        print("Done")
+        print("Actual")
+        print_texts(labels.numpy())
+        print("Learned")
         print_texts(predicted.numpy())
         break
 
