@@ -48,23 +48,17 @@ class TextLearner(nn.Module):
         # Embedding words
         self.embed = nn.Embedding(in_dim, embed_dim)
 
-        # Gated recurrent unit (GRU) - https://en.wikipedia.org/wiki/Gated_recurrent_unit
-        self.gru = nn.GRU(embed_dim, hidden_dim)
+        self.lin1 = nn.Linear()
+        self.rlu = nn.ReLU()
 
         # Out
-        self.lin_out = nn.Linear(hidden_dim, out_dim)
+        self.lin2 = nn.Linear(hidden_dim, out_dim)
         self.soft = nn.LogSoftmax(dim=1)
 
-        # Init hidden
-        self.hidden = self.init_hidden()
-
-    def init_hidden(self):
-        return torch.zeros(1, 1, self.hidden_dim, device=device)
-
     def forward(self, x):
-        out = self.embed(x).view(len(x), 1, -1)
-        out, hidden = self.gru(out, self.hidden)
-        out = self.lin_out(out.view(len(x), -1))
+        out = self.embed(x).view(1, -1)
+
+        out = self.lin_out(out)
         out = self.soft(out)
         return out
 
@@ -108,7 +102,7 @@ Training loop
 print("Traning the model")
 itr = 0
 results = [0 for i in range(len(text))]
-for epoch in range(200):  # Fix number of epoch
+for epoch in range(150):  # Fix number of epoch
     for line in text:
 
         input_tensor = tensor_from_text(line)
