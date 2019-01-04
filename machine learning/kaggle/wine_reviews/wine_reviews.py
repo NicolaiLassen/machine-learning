@@ -3,6 +3,7 @@ import torch.nn as nn
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from random import randint
 from nltk.tokenize import word_tokenize
 
 # Run as GPU or CPU
@@ -27,19 +28,26 @@ for i in range(100):
             tokens.append(word)
     text.append(word_tokenize(df_wine["description"][i]))
     label.append(df_wine["variety"][i])
-
-print(text)
-print(label)
+print("X: {}".format(text))
+print("y: {}".format(label))
 
 # Dictionary of ix
 word_to_ix = {word: i for i, word in enumerate(tokens)}
-label_to_ix = {label: i for i, label in enumerate(label)}
-ix_to_label = {i: label for i, label in enumerate(label)}
 
+label_to_ix = {}
+itr = 0
+for y in label:
+    if y not in label_to_ix:
+        label_to_ix[y] = itr
+        itr += 1
+ix_to_label = {i: label for i, label in enumerate(label_to_ix)}
+print("Labels: {}".format(label_to_ix))
+print("Number of labels: {}".format(len(label_to_ix)))
 
 """
 Model
 """
+
 
 class RNN(nn.Module):
     def __init__(self, input_dim, embed_dim, hidden_dim, out_dim):
@@ -53,7 +61,6 @@ class RNN(nn.Module):
         self.fc = nn.Linear(hidden_dim, out_dim)
 
     def forward(self, x):
-        x = x.transpose(1, 0)
         out = self.embeds(x)
         out, hidden = self.rnn(out)
         out = self.fc(hidden.view(1, -1))
@@ -62,7 +69,9 @@ class RNN(nn.Module):
 
 # Create tensor from text
 def tensor_from_text(text):
-    return torch.tensor([[word_to_ix[word] for word in text]], dtype=torch.long, device=device)
+    tensor = torch.tensor([[word_to_ix[word] for word in text]], dtype=torch.long, device=device)
+    tensor = tensor.transpose(1, 0)
+    return tensor
 
 
 # Create winery tensor
@@ -70,20 +79,18 @@ def tensor_from_label(label):
     return torch.tensor([label_to_ix[label]], dtype=torch.long, device=device)
 
 
+# Create batch
 text_batch = []
 label_batch = []
-
-# Create batches
 for i in range(len(text)):
     text_batch.append(tensor_from_text(text[i]))
     label_batch.append(tensor_from_label(label[i]))
-
 
 # DIMS
 EMBEDDING_DIM = 100
 HIDDEN_DIM = 100
 INPUT_DIM = len(tokens)
-OUTPUT_DIM = len(label)
+OUTPUT_DIM = len(ix_to_label)
 
 # Init the model
 model = RNN(INPUT_DIM, EMBEDDING_DIM, HIDDEN_DIM, OUTPUT_DIM)
@@ -146,23 +153,24 @@ for epoch in range(10):  # Fix number of epoch
     accuracy = 100 * correct / len(text)
     print("Accuracy: {}%".format(int(accuracy)))
     print("Loss: {}".format(loss))
-    print("Epoch: {}\n".format(epoch+1))
+    print("Epoch: {}\n".format(epoch + 1))
 
     # Plot
     loss_array.append(loss)
-    epochs_array.append(epoch+1)
+    epochs_array.append(epoch + 1)
 
 """
 Testing model
 """
 
+rand_index = randint(0, len(text))
+
 print("Done")
-print("Trying to predict text: \"{}\"".format(df_wine["description"][0]))
-outputs = model(text_batch[0])
+print("Trying to predict text: \"{}\"".format(df_wine["description"][rand_index]))
+outputs = model(text_batch[rand_index])
 _, predicted = torch.max(outputs.data, 1)
 print("Predicted: {}".format(ix_to_label[predicted[0].item()]))
-print("Actual: {}".format(ix_to_label[(label_batch[0])[0].item()]))
-
+print("Actual: {}".format(ix_to_label[(label_batch[rand_index])[0].item()]))
 
 """
 Plot error

@@ -57,7 +57,6 @@ class TextLearner(nn.Module):
 
     def forward(self, x):
         out = self.embed(x).view(1, -1)
-
         out = self.lin_out(out)
         out = self.soft(out)
         return out
