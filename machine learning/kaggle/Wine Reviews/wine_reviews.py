@@ -114,10 +114,8 @@ loss = 0
 
 print("\nTraning the model")
 for epoch in range(10):  # Fix number of epoch
-
     pred = []
     act = []
-
     for i in range(len(text_batch)):
         # Create tensors
         input_tensor = text_batch[i]
@@ -164,7 +162,6 @@ Testing model
 """
 
 rand_index = randint(0, len(text))
-
 print("Done")
 print("Trying to predict text: \"{}\"".format(df_wine["description"][rand_index]))
 outputs = model(text_batch[rand_index])

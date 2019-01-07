@@ -8,7 +8,9 @@ machine learning/.idea/*
 .idea/nmtl.iml
 .idea/misc.xml
 .idea/encodings.xml
-machine learning/kaggle/Wine Reviews/data/winemag-data-130k-v2.csv
 .idea/vcs.xml
 .idea/modules.xml
 .idea/libraries/R_User_Library.xml
+machine learning/kaggle/Wine Reviews/data/winemag-data-130k-v2.csv
+machine learning/commonvoice/cv_corpus_v1.tar.gz
+machine learning/NLP/data/data.txt
