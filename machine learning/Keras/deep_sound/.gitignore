@@ -1,0 +1,10 @@
+data/*
+test/*
+.idea/*
+.idea/workspace.xml
+.idea/nmtl.iml
+.idea/misc.xml
+.idea/encodings.xml
+.idea/vcs.xml
+.idea/modules.xml
+.idea/libraries/R_User_Library.xml
